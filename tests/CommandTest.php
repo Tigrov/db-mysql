@@ -71,7 +71,7 @@ final class CommandTest extends CommonCommandTest
     public function testBatchInsert(
         string $table,
         array $columns,
-        array $values,
+        iterable $values,
         string $expected,
         array $expectedParams = [],
         int $insertedRow = 1
@@ -120,9 +120,10 @@ final class CommandTest extends CommonCommandTest
         array $columns,
         array|string $conditions,
         array $params,
-        string $expected
+        array $expectedValues,
+        int $expectedCount,
     ): void {
-        parent::testUpdate($table, $columns, $conditions, $params, $expected);
+        parent::testUpdate($table, $columns, $conditions, $params, $expectedValues, $expectedCount);
     }
 
     /**

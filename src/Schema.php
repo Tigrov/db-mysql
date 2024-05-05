@@ -19,6 +19,7 @@ use Yiisoft\Db\Schema\Builder\ColumnInterface;
 use Yiisoft\Db\Schema\ColumnSchemaInterface;
 use Yiisoft\Db\Schema\TableSchemaInterface;
 
+use function array_change_key_case;
 use function array_map;
 use function array_merge;
 use function array_values;
@@ -161,7 +162,7 @@ final class Schema extends AbstractPdoSchema
         $uniqueIndexes = [];
         $regexp = '/UNIQUE KEY\s+[`"](.+)[`"]\s*\(([`"].+[`"])+\)/mi';
 
-        if (preg_match_all($regexp, $sql, $matches, PREG_SET_ORDER)) {
+        if (preg_match_all($regexp, $sql, $matches, PREG_SET_ORDER) > 0) {
             foreach ($matches as $match) {
                 $indexName = $match[1];
                 $indexColumns = array_map('trim', preg_split('/[`"],[`"]/', trim($match[2], '`"')));
@@ -230,7 +231,7 @@ final class Schema extends AbstractPdoSchema
 
         /** @psalm-var ColumnInfoArray $info */
         foreach ($columns as $info) {
-            $info = $this->normalizeRowKeyCase($info, false);
+            $info = array_change_key_case($info);
 
             $info['extra_default_value'] = $columnsExtra[(string) $info['field']] ?? '';
 
@@ -409,6 +410,8 @@ final class Schema extends AbstractPdoSchema
      * @param string $name The table name.
      *
      * @return array The cache key.
+     *
+     * @psalm-suppress DeprecatedMethod
      */
     protected function getCacheKey(string $name): array
     {
@@ -575,7 +578,7 @@ final class Schema extends AbstractPdoSchema
             return new Expression('CURRENT_TIMESTAMP' . (!empty($matches[1]) ? '(' . $matches[1] . ')' : ''));
         }
 
-        if (!empty($column->getExtra()) && !empty($defaultValue)) {
+        if (!empty($defaultValue) && !empty($column->getExtra())) {
             return new Expression($defaultValue);
         }
 
@@ -675,7 +678,7 @@ final class Schema extends AbstractPdoSchema
         ])->queryAll();
 
         /** @psalm-var array[][] $constraints */
-        $constraints = $this->normalizeRowKeyCase($constraints, true);
+        $constraints = array_map('array_change_key_case', $constraints);
         $constraints = DbArrayHelper::index($constraints, null, ['type', 'name']);
 
         $result = [
@@ -790,7 +793,7 @@ final class Schema extends AbstractPdoSchema
         ])->queryAll();
 
         /** @psalm-var array[] $indexes */
-        $indexes = $this->normalizeRowKeyCase($indexes, true);
+        $indexes = array_map('array_change_key_case', $indexes);
         $indexes = DbArrayHelper::index($indexes, null, ['name']);
         $result = [];
 
@@ -927,7 +930,7 @@ final class Schema extends AbstractPdoSchema
         $result = [];
         $regexp = '/json_valid\([\`"](.+)[\`"]\s*\)/mi';
 
-        if (preg_match_all($regexp, $sql, $matches, PREG_SET_ORDER)) {
+        if (preg_match_all($regexp, $sql, $matches, PREG_SET_ORDER) > 0) {
             foreach ($matches as $match) {
                 $result[] = $match[1];
             }
